@@ -57,17 +57,17 @@ public abstract class DBShardingBundle<T extends Configuration> implements Confi
     @Getter
     private ShardManager shardManager;
     @Getter
-    private String dbNamespace;
+    private String tag;
 
-    public DBShardingBundle(String dbNamespace, Class<?> entity, Class<?>... entities) {
-        this.dbNamespace = dbNamespace;
+    public DBShardingBundle(String tag, Class<?> entity, Class<?>... entities) {
+        this.tag = tag;
 
         val inEntities = ImmutableList.<Class<?>>builder().add(entity).add(entities).build();
         init(inEntities);
     }
 
-    public DBShardingBundle(String dbNamespace, String classPathPrefix) {
-        this.dbNamespace = dbNamespace;
+    public DBShardingBundle(String tag, String classPathPrefix) {
+        this.tag = tag;
 
         Set<Class<?>> entities = new Reflections(classPathPrefix).getTypesAnnotatedWith(Entity.class);
         Preconditions.checkArgument(!entities.isEmpty(), String.format("No entity class found at %s", classPathPrefix));
@@ -86,7 +86,7 @@ public abstract class DBShardingBundle<T extends Configuration> implements Confi
     private void init(final ImmutableList<Class<?>> inEntities) {
         final String SHARD_ENV = "db.shards";
 
-        String numShardsEnv = System.getProperty(String.join(".", dbNamespace, SHARD_ENV),
+        String numShardsEnv = System.getProperty(String.join(".", tag, SHARD_ENV),
                 System.getProperty(SHARD_ENV, "2"));
 
         int numShards = Integer.parseInt(numShardsEnv);
@@ -96,7 +96,7 @@ public abstract class DBShardingBundle<T extends Configuration> implements Confi
             shardBundles.add(new HibernateBundle<T>(inEntities, new SessionFactoryFactory()) {
                 @Override
                 protected String name() {
-                    return String.format("connectionpool-%s-%d", dbNamespace, finalI);
+                    return String.format("connectionpool-%s-%d", tag, finalI);
                 }
 
                 @Override
